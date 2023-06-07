@@ -1,0 +1,40 @@
+<template name="configureLoginServiceDialogForMicrosoft">
+  <p>
+    First, you'll need to get a Microsoft Client ID. Follow these steps:
+  </p>
+  <ol>
+    <li>
+      Sign in to the <a href="https://portal.azure.com/" target="blank">Azure portal</a>
+    </li>
+    <li>
+      If you have access to multiple tenants, use the Directories + subscriptions filter  in the top menu to switch to the tenant in which you want to register the application.
+    </li>
+    <li>
+      Under Manage, select App registrations > New registration.
+    </li>
+    <li>
+      Enter a Name for your application. Users of your app might see this name, and you can change it later.
+    </li>
+    <li>
+      Under Supported account types, select Accounts in this organizational directory only.
+    </li>
+    <li>
+      Set the Redirect URI type to Web and value to <span class="url">{{siteUrl}}_oauth/microsoft?close</span>.
+    </li>
+    <li>
+      Select Register.
+    </li>
+    <li>
+      On the app Overview page, note the Application (client) ID value for later use.
+    </li>
+    <li>
+      Under Manage, select Certificates & secrets > Client secrets > New client secret. Leave the description blank and default expiration, and then select Add.
+    </li>
+    <li>
+      Note the value of Client secret for later use.
+    </li>
+  </ol>
+  <p>
+    For more information, visit <a href="https://learn.microsoft.com/en-us/azure/active-directory/develop/web-app-quickstart?pivots=devlang-nodejs-msal&tabs=windows#step-1-register-your-application" target="blank">here</a>
+  </p>
+</template>
