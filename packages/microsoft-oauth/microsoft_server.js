@@ -3,24 +3,24 @@ Microsoft = {};
 OAuth.registerService("microsoft", 2, null, async (query) => {
   const accessToken = await getAccessToken(query);
   const identity = await getIdentity(accessToken);
-  const emails = await getEmails(accessToken);
-  const primaryEmail = emails.find((email) => email.primary);
+  // const emails = await getEmails(accessToken);
+  // const primaryEmail = emails?.find((email) => email.primary);
 
   return {
     serviceData: {
-      id: identity.id,
+      id: identity.email,
       accessToken: OAuth.sealSecret(accessToken),
-      email: identity.email || (primaryEmail && primaryEmail.email) || "",
-      username: identity.login,
-      name: identity.name,
-      avatar: identity.avatar_url,
-      company: identity.company,
-      blog: identity.blog,
-      location: identity.location,
-      bio: identity.bio,
-      emails,
+      email: identity.email,
+      username: identity.email,
+      // name: identity.name,
+      avatar: identity.picture,
+      // company: identity.company,
+      // blog: identity.blog,
+      // location: identity.location,
+      // bio: identity.bio,
+      // emails,
     },
-    options: { profile: { name: identity.name } },
+    // options: { profile: { name: identity.name } },
   };
 });
 
@@ -28,6 +28,8 @@ let userAgent = "Meteor";
 if (Meteor.release) userAgent += `/${Meteor.release}`;
 
 const getAccessToken = async (query) => {
+  console.log("getAccessToken, query", query);
+
   const config = ServiceConfiguration.configurations.findOne({
     service: "microsoft",
   });
@@ -35,14 +37,24 @@ const getAccessToken = async (query) => {
 
   let response;
   try {
-    const tenant = config.tenantId; // common, organizations, consumers
+    // const tenant = config.tenantId; // common, organizations, consumers
+    const tenant = "common"; // common, organizations, consumers
+    const scopes = [
+      "openid",
+      "email",
+      "profile",
+      "https://graph.microsoft.com/.default",
+    ];
     const content = new URLSearchParams({
       client_id: config.clientId,
       client_secret: config.secret,
-      scope: `https://graph.microsoft.com/.default`,
-      grant_type: `client_credentials`,
+      scope: scopes.join(" "),
+      grant_type: `authorization_code`,
+      code: query.code,
+      redirect_uri: OAuth._redirectUri("microsoft", config),
+      state: query.state,
     });
-    console.log("post content", content.toString());
+    console.log("getAccessToken, post content", content.toString());
     const request = await fetch(
       `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`,
       {
@@ -55,7 +67,7 @@ const getAccessToken = async (query) => {
       }
     );
     response = await request.json();
-    console.log("response:", response);
+    console.log("getAccessToken, response:", response);
   } catch (err) {
     throw Object.assign(
       new Error(
@@ -76,15 +88,18 @@ const getAccessToken = async (query) => {
 
 const getIdentity = async (accessToken) => {
   try {
-    const request = await fetch("https://api.github.com/user", {
+    console.log("getIdentity request", accessToken);
+    const request = await fetch("https://graph.microsoft.com/oidc/userinfo", {
       method: "GET",
       headers: {
         Accept: "application/json",
         "User-Agent": userAgent,
-        Authorization: `token ${accessToken}`,
-      }, // http://developer.github.com/v3/#user-agent-required
+        Authorization: `Bearer ${accessToken}`,
+      }, // https://learn.microsoft.com/en-us/azure/active-directory/develop/userinfo#calling-the-api
     });
-    return await request.json();
+    const response = await request.json();
+    console.log("getIdentity response", response);
+    return response;
   } catch (err) {
     throw Object.assign(
       new Error(`Failed to fetch identity from Microsoft. ${err.message}`),

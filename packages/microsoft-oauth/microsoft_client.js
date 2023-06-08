@@ -25,6 +25,8 @@ Microsoft.requestCredential = (options, credentialRequestCompleteCallback) => {
   // we need the email scope to get user id from google.
   const requiredScopes = {
     openid: 1,
+    email: 1,
+    profile: 1,
     "https://graph.microsoft.com/.default": 1,
   };
   let scopes = options.requestPermissions || ["openid"];
@@ -43,16 +45,18 @@ Microsoft.requestCredential = (options, credentialRequestCompleteCallback) => {
 
   Object.assign(loginUrlParameters, {
     // response_type: "id_token+token",
-    response_type: "id_token+token",
+    response_type: "code",
     client_id: config.clientId,
     scope: scopes.join(" "), // space delimited
     redirect_uri: OAuth._redirectUri("microsoft", config),
-    response_mode: "fragment",
+    response_mode: "query",
     state: OAuth._stateParam(loginStyle, credentialToken, options.redirectUrl),
     nonce: credentialToken,
   });
+  const tenant = "common";
+  // const tenant = config.tenantId;
   const loginUrl =
-    "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?" +
+    `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?` +
     Object.keys(loginUrlParameters)
       .map((param) =>
         param === "response_type"
