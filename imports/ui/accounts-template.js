@@ -1,1 +1,1 @@
-<template name='accounts-ui'>{{ loginButton }}</template>;
+<template name='accounts-ui'>{{ loginButtons }}</template>;
