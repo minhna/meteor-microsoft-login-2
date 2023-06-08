@@ -42,6 +42,7 @@ Microsoft.requestCredential = (options, credentialRequestCompleteCallback) => {
   const loginStyle = OAuth._loginStyle("microsoft", config, options);
 
   Object.assign(loginUrlParameters, {
+    // response_type: "id_token+token",
     response_type: "id_token+token",
     client_id: config.clientId,
     scope: scopes.join(" "), // space delimited
@@ -53,13 +54,16 @@ Microsoft.requestCredential = (options, credentialRequestCompleteCallback) => {
   const loginUrl =
     "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?" +
     Object.keys(loginUrlParameters)
-      .map(
-        (param) =>
-          `${encodeURIComponent(param)}=${encodeURIComponent(
-            loginUrlParameters[param]
-          )}`
+      .map((param) =>
+        param === "response_type"
+          ? `${encodeURIComponent(param)}=${loginUrlParameters[param]}`
+          : `${encodeURIComponent(param)}=${encodeURIComponent(
+              loginUrlParameters[param]
+            )}`
       )
       .join("&");
+
+  alert(loginUrl);
 
   OAuth.launchLogin({
     loginService: "microsoft",

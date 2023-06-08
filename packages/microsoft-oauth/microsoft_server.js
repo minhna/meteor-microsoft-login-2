@@ -42,17 +42,20 @@ const getAccessToken = async (query) => {
       scope: `https://graph.microsoft.com/.default`,
       grant_type: `client_credentials`,
     });
+    console.log("post content", content.toString());
     const request = await fetch(
-      `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token?${content.toString()}`,
+      `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/token`,
       {
         method: "POST",
         headers: {
           Accept: "application/json",
           "User-Agent": userAgent,
         },
+        body: content,
       }
     );
     response = await request.json();
+    console.log("response:", response);
   } catch (err) {
     throw Object.assign(
       new Error(
@@ -64,7 +67,7 @@ const getAccessToken = async (query) => {
   if (response.error) {
     // if the http response was a json object with an error attribute
     throw new Error(
-      `Failed to complete OAuth handshake with GitHub. ${response.error}`
+      `Failed to complete OAuth handshake with Microsoft. ${response.error}`
     );
   } else {
     return response.access_token;
