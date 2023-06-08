@@ -25,3 +25,5 @@ microsoft-oauth
 microsoft-config-ui
 accounts-microsoft
 accounts-ui
+gadicc:blaze-react-component
+jquery
