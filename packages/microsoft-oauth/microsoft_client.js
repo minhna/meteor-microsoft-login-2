@@ -63,8 +63,6 @@ Microsoft.requestCredential = (options, credentialRequestCompleteCallback) => {
       )
       .join("&");
 
-  alert(loginUrl);
-
   OAuth.launchLogin({
     loginService: "microsoft",
     loginStyle,
