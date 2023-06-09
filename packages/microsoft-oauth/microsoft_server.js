@@ -1,26 +1,45 @@
+import { fetch } from "meteor/fetch";
+
+const hasOwn = Object.prototype.hasOwnProperty;
+
 Microsoft = {};
+
+Microsoft.whitelistedFields = [
+  "email",
+  "name",
+  "family_name",
+  "given_name",
+  "middle_name",
+  "nickname",
+  "preferred_username",
+  "profile",
+  "picture",
+  "website",
+  "gender",
+  "birthdate",
+  "zoneinfo",
+  "locale",
+];
 
 OAuth.registerService("microsoft", 2, null, async (query) => {
   const accessToken = await getAccessToken(query);
   const identity = await getIdentity(accessToken);
-  // const emails = await getEmails(accessToken);
-  // const primaryEmail = emails?.find((email) => email.primary);
+
+  const fields = {};
+  Microsoft.whitelistedFields.forEach(function (name) {
+    if (hasOwn.call(identity, name)) {
+      fields[name] = identity[name];
+    }
+  });
 
   return {
     serviceData: {
+      ...fields,
       id: identity.email,
       accessToken: OAuth.sealSecret(accessToken),
       email: identity.email,
-      username: identity.email,
-      // name: identity.name,
-      avatar: identity.picture,
-      // company: identity.company,
-      // blog: identity.blog,
-      // location: identity.location,
-      // bio: identity.bio,
-      // emails,
     },
-    // options: { profile: { name: identity.name } },
+    options: identity.name ? { profile: { name: identity.name } } : undefined,
   };
 });
 
@@ -37,14 +56,8 @@ const getAccessToken = async (query) => {
 
   let response;
   try {
-    // const tenant = config.tenantId; // common, organizations, consumers
     const tenant = "common"; // common, organizations, consumers
-    const scopes = [
-      "openid",
-      "email",
-      "profile",
-      "https://graph.microsoft.com/.default",
-    ];
+    const scopes = ["openid", "email", "profile"];
     const content = new URLSearchParams({
       client_id: config.clientId,
       client_secret: config.secret,
@@ -88,7 +101,7 @@ const getAccessToken = async (query) => {
 
 const getIdentity = async (accessToken) => {
   try {
-    console.log("getIdentity request", accessToken);
+    console.log("getIdentity request", { accessToken });
     const request = await fetch("https://graph.microsoft.com/oidc/userinfo", {
       method: "GET",
       headers: {
@@ -105,22 +118,6 @@ const getIdentity = async (accessToken) => {
       new Error(`Failed to fetch identity from Microsoft. ${err.message}`),
       { response: err.response }
     );
-  }
-};
-
-const getEmails = async (accessToken) => {
-  try {
-    const request = await fetch("https://api.github.com/user/emails", {
-      method: "GET",
-      headers: {
-        "User-Agent": userAgent,
-        Accept: "application/json",
-        Authorization: `token ${accessToken}`,
-      }, // http://developer.github.com/v3/#user-agent-required
-    });
-    return await request.json();
-  } catch (err) {
-    return [];
   }
 };
 

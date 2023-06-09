@@ -27,9 +27,8 @@ Microsoft.requestCredential = (options, credentialRequestCompleteCallback) => {
     openid: 1,
     email: 1,
     profile: 1,
-    "https://graph.microsoft.com/.default": 1,
   };
-  let scopes = options.requestPermissions || ["openid"];
+  let scopes = options.requestPermissions || ["openid", "email", "profile"];
   scopes.forEach((scope) => (requiredScopes[scope] = 1));
   scopes = Object.keys(requiredScopes);
 
@@ -44,7 +43,6 @@ Microsoft.requestCredential = (options, credentialRequestCompleteCallback) => {
   const loginStyle = OAuth._loginStyle("microsoft", config, options);
 
   Object.assign(loginUrlParameters, {
-    // response_type: "id_token+token",
     response_type: "code",
     client_id: config.clientId,
     scope: scopes.join(" "), // space delimited
@@ -53,17 +51,15 @@ Microsoft.requestCredential = (options, credentialRequestCompleteCallback) => {
     state: OAuth._stateParam(loginStyle, credentialToken, options.redirectUrl),
     nonce: credentialToken,
   });
-  const tenant = "common";
-  // const tenant = config.tenantId;
+  const tenant = "common"; // common, organizations, consumers
   const loginUrl =
     `https://login.microsoftonline.com/${tenant}/oauth2/v2.0/authorize?` +
     Object.keys(loginUrlParameters)
-      .map((param) =>
-        param === "response_type"
-          ? `${encodeURIComponent(param)}=${loginUrlParameters[param]}`
-          : `${encodeURIComponent(param)}=${encodeURIComponent(
-              loginUrlParameters[param]
-            )}`
+      .map(
+        (param) =>
+          `${encodeURIComponent(param)}=${encodeURIComponent(
+            loginUrlParameters[param]
+          )}`
       )
       .join("&");
 
